@@ -226,14 +226,13 @@ def main(lr, batch_size, epochs, data_dir, seed, augmentation_name):
     # Get the augmentation to use
 
     # Train the model
-    # best_model = train_model(model, lr, batch_size, epochs, data_dir, "checkpoint_name", device)
-    model_path = data_dir + "/model"
-    model.load_state_dict(torch.load(model_path))
+    best_model = train_model(model, lr, batch_size, epochs, data_dir, "checkpoint_name", device)
+    
     # Evaluate the model on the test set
     test_data = get_test_set(data_dir)
     test_dl = data.DataLoader(test_data, batch_size)
     
-    test_acc = evaluate_model(model, test_dl, device)
+    test_acc = evaluate_model(best_model, test_dl, device)
     print(f'Test accuracy: {test_acc:.4f}')
 
     #######################
