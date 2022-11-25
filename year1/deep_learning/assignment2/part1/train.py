@@ -52,10 +52,15 @@ def get_model(num_classes=100):
     #######################
 
     # Get the pretrained ResNet18 model on ImageNet from torchvision.models
-    pass
+    model = models.resnet18(pretrained=True)
+
+    for param in model.parameters():
+        param.requires_grad = False
 
     # Randomly initialize and modify the model's last layer for CIFAR100.
-    pass
+    num_ftrs = model.fc.in_features
+    model.fc = nn.Linear(num_ftrs, num_classes, bias=False)
+    nn.init.normal_(model.fc.weight, mean = 0.0, std=0.01)
 
     #######################
     # END OF YOUR CODE    #
@@ -85,16 +90,62 @@ def train_model(model, lr, batch_size, epochs, data_dir, checkpoint_name, device
     #######################
 
     # Load the datasets
-    pass
+    train_data, val_data = get_train_validation_set(data_dir)
+    train_dl = data.DataLoader(train_data, batch_size)
+    val_dl = data.DataLoader(val_data, batch_size)
 
     # Initialize the optimizer (Adam) to train the last layer of the model.
-    pass
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
     # Training loop with validation after each epoch. Save the best model.
-    pass
+    best_acc = 0
+    model_path = data_dir + "/model"
+    for epoch in range(epochs):
+
+        print(f'Epoch {epoch+1}/{epochs}')
+        print('-'*10)
+
+        # training
+
+        model.train()
+
+        running_loss = 0.0
+        running_corrects = 0
+
+        for mini_batch in train_dl:
+            inputs, labels = mini_batch
+            inputs = inputs.to(device)
+
+            optimizer.zero_grad()
+
+            # forward pass
+            outputs = model(inputs)
+            _, preds = torch.max(outputs, 1)
+            loss = nn.CrossEntropyLoss()
+            l = loss(outputs, labels)
+
+            # backward pass
+            l.backward()
+            optimizer.step()
+            
+            # stats
+            running_loss += l.item() * inputs.size(0)
+            running_corrects += torch.sum(preds == labels.data)
+
+        epoch_loss = running_loss / len(train_data)
+        epoch_acc = running_corrects.double() / len(train_data)
+
+        # validation
+        val_acc = evaluate_model(model, val_dl, device)
+        if val_acc > best_acc:
+            best_acc = val_acc
+            torch.save(model.state_dict(), model_path)
+
+        print(f'Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f} Val Acc: {val_acc:.4f}')
+
 
     # Load the best model on val accuracy and return it.
-    pass
+    model.load_state_dict(torch.load(model_path))
 
     #######################
     # END OF YOUR CODE    #
@@ -118,12 +169,28 @@ def evaluate_model(model, data_loader, device):
     #######################
     # PUT YOUR CODE HERE  #
     #######################
+
     # Set model to evaluation mode (Remember to set it back to training mode in the training loop)
-    pass
+    model.eval()
 
     # Loop over the dataset and compute the accuracy. Return the accuracy
     # Remember to use torch.no_grad().
-    pass
+    running_corrects = 0
+    total = 0
+
+    for mini_batch in data_loader:
+        with torch.no_grad():
+            inputs, labels = mini_batch
+            inputs = inputs.to(device)
+
+            outputs = model(inputs)
+            _, preds = torch.max(outputs, 1)
+            total += len(labels)
+        
+        # stats
+        running_corrects += torch.sum(preds == labels.data)
+
+    accuracy = running_corrects.double() / total
 
     #######################
     # END OF YOUR CODE    #
@@ -148,22 +215,26 @@ def main(lr, batch_size, epochs, data_dir, seed, augmentation_name):
     # PUT YOUR CODE HERE  #
     #######################
     # Set the seed for reproducibility
-    pass
+    set_seed(seed)
 
     # Set the device to use for training
-    pass
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     # Load the model
-    pass
+    model = get_model()
 
     # Get the augmentation to use
-    pass
 
     # Train the model
-    pass
-
+    # best_model = train_model(model, lr, batch_size, epochs, data_dir, "checkpoint_name", device)
+    model_path = data_dir + "/model"
+    model.load_state_dict(torch.load(model_path))
     # Evaluate the model on the test set
-    pass
+    test_data = get_test_set(data_dir)
+    test_dl = data.DataLoader(test_data, batch_size)
+    
+    test_acc = evaluate_model(model, test_dl, device)
+    print(f'Test accuracy: {test_acc:.4f}')
 
     #######################
     # END OF YOUR CODE    #
