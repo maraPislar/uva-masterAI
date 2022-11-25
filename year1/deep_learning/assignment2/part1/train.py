@@ -121,6 +121,7 @@ def train_model(model, lr, batch_size, epochs, data_dir, checkpoint_name, device
 
             # forward pass
             outputs = model(inputs)
+            outputs = outputs.to(device)
             _, preds = torch.max(outputs, 1)
             loss = nn.CrossEntropyLoss()
             l = loss(outputs, labels)
@@ -186,6 +187,7 @@ def evaluate_model(model, data_loader, device):
             labels = labels.to(device)
 
             outputs = model(inputs)
+            outputs = outputs.to(device)
             _, preds = torch.max(outputs, 1)
             total += len(labels)
         
@@ -220,7 +222,7 @@ def main(lr, batch_size, epochs, data_dir, seed, augmentation_name):
     set_seed(seed)
 
     # Set the device to use for training
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Load the model
     model = get_model()
