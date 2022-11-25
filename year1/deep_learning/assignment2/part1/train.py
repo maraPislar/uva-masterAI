@@ -115,6 +115,7 @@ def train_model(model, lr, batch_size, epochs, data_dir, checkpoint_name, device
         for mini_batch in train_dl:
             inputs, labels = mini_batch
             inputs = inputs.to(device)
+            labels = labels.to(device)
 
             optimizer.zero_grad()
 
@@ -182,6 +183,7 @@ def evaluate_model(model, data_loader, device):
         with torch.no_grad():
             inputs, labels = mini_batch
             inputs = inputs.to(device)
+            labels = labels.to(device)
 
             outputs = model(inputs)
             _, preds = torch.max(outputs, 1)
@@ -227,7 +229,7 @@ def main(lr, batch_size, epochs, data_dir, seed, augmentation_name):
 
     # Train the model
     best_model = train_model(model, lr, batch_size, epochs, data_dir, "checkpoint_name", device)
-    
+
     # Evaluate the model on the test set
     test_data = get_test_set(data_dir)
     test_dl = data.DataLoader(test_data, batch_size)
