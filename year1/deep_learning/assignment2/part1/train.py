@@ -226,6 +226,7 @@ def main(lr, batch_size, epochs, data_dir, seed, augmentation_name):
 
     # Load the model
     model = get_model()
+    model.to(device)
 
     # Get the augmentation to use
 
