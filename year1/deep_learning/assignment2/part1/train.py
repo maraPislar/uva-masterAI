@@ -90,7 +90,7 @@ def train_model(model, lr, batch_size, epochs, data_dir, checkpoint_name, device
     #######################
 
     # Load the datasets
-    train_data, val_data = get_train_validation_set(data_dir)
+    train_data, val_data = get_train_validation_set(data_dir, augmentation_name=augmentation_name)
     train_dl = data.DataLoader(train_data, batch_size)
     val_dl = data.DataLoader(val_data, batch_size)
 
@@ -99,7 +99,7 @@ def train_model(model, lr, batch_size, epochs, data_dir, checkpoint_name, device
 
     # Training loop with validation after each epoch. Save the best model.
     best_acc = 0
-    model_path = data_dir + "/model"
+
     for epoch in range(epochs):
 
         print(f'Epoch {epoch+1}/{epochs}')
@@ -141,13 +141,13 @@ def train_model(model, lr, batch_size, epochs, data_dir, checkpoint_name, device
         val_acc = evaluate_model(model, val_dl, device)
         if val_acc > best_acc:
             best_acc = val_acc
-            torch.save(model.state_dict(), model_path)
+            torch.save(model.state_dict(), checkpoint_name)
 
         print(f'Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f} Val Acc: {val_acc:.4f}')
 
 
     # Load the best model on val accuracy and return it.
-    model.load_state_dict(torch.load(model_path))
+    model.load_state_dict(torch.load(checkpoint_name))
 
     #######################
     # END OF YOUR CODE    #
@@ -227,11 +227,13 @@ def main(lr, batch_size, epochs, data_dir, seed, augmentation_name):
     # Load the model
     model = get_model()
     model.to(device)
+    model_path = data_dir + "/model_checkpoint"
 
     # Get the augmentation to use
+    aug_name = augmentation_name
 
     # Train the model
-    best_model = train_model(model, lr, batch_size, epochs, data_dir, "checkpoint_name", device)
+    best_model = train_model(model, lr, batch_size, epochs, data_dir, model_path, device, aug_name)
 
     # Evaluate the model on the test set
     test_data = get_test_set(data_dir)
@@ -243,7 +245,6 @@ def main(lr, batch_size, epochs, data_dir, seed, augmentation_name):
     #######################
     # END OF YOUR CODE    #
     #######################
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
