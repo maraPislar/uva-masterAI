@@ -46,6 +46,7 @@ class Learner:
         self.train_dataset, self.val_dataset, self.test_dataset = load_dataset(
             args, preprocess
         )
+        
         self.train_loader = construct_dataloader(args, self.train_dataset)
         self.val_loader = construct_dataloader(args, self.val_dataset)
         self.test_loader = construct_dataloader(args, self.test_dataset)
@@ -64,10 +65,14 @@ class Learner:
         # PUT YOUR CODE HERE  #
         #######################
         # TODO: Turn off gradients in both the image and the text encoder
+
+        for name, param in self.vpt.named_parameters():
+            if "prompt_learner" not in name:
+                param.requires_grad = False
+
         # Note: You need to keep the visual prompt's parameters trainable
         # Hint: Check for "prompt_learner" in the parameters' names
 
-        raise NotImplementedError
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -214,13 +219,21 @@ class Learner:
 
             # Steps ( your usual training loop :) ):
             # - Set the gradients to zero
+            self.optimizer.zero_grad()
             # - Move the images/targets to the device
+            images = images.to(self.device)
+            target = target.to(self.device)
             # - Perform a forward pass (using self.vpt)
+            output = self.vpt.forward(images)
             # - Compute the loss (using self.criterion)
+            loss = self.criterion(output, target)
             # - Perform a backward pass
+            loss.backward()
             # - Update the parameters
+            self.optimizer.step()
 
-            raise NotImplementedError
+            # self.optimizer.step()
+
             #######################
             # END OF YOUR CODE    #
             #######################
@@ -260,7 +273,8 @@ class Learner:
         batch_time = AverageMeter("Time", ":6.3f")
         losses = AverageMeter("Loss", ":.4e")
         top1_prompt = AverageMeter("Prompt Acc@1", ":6.2f")
-        loader = self.val_loader if split == "valid" else self.test_loader
+        # loader = self.val_loader if split == "valid" else self.test_loader
+        loader = self.val_loader
         progress = ProgressMeter(
             len(loader),
             [batch_time, losses, top1_prompt],
@@ -282,10 +296,13 @@ class Learner:
 
                 # Steps ( your usual evaluation loop :) ):
                 # - Move the images/targets to the device
+                images = images.to(self.device)
+                target = target.to(self.device)
                 # - Forward pass (using self.vpt)
+                output = self.vpt.forward(images)
                 # - Compute the loss (using self.criterion)
+                loss = self.criterion(output, target)
 
-                raise NotImplementedError
                 #######################
                 # END OF YOUR CODE    #
                 #######################

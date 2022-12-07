@@ -20,6 +20,8 @@ import torch
 import numpy as np
 import shutil
 
+class DummyArgs:
+    pass
 
 def set_seed(seed):
     """

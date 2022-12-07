@@ -89,7 +89,7 @@ def parse_option():
         "--seed", type=int, default=0, help="seed for initializing training"
     )
     parser.add_argument(
-        "--model_dir", type=str, default="./save/models", help="path to save models"
+        "--model_dir", type=str, default="./save/test_models", help="path to save models"
     )
     parser.add_argument(
         "--image_dir", type=str, default="./save/images", help="path to save images"

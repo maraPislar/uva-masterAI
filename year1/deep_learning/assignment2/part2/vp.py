@@ -36,13 +36,19 @@ class PadPrompter(nn.Module):
 
         # TODO: Define the padding as variables self.pad_left, self.pad_right, self.pad_up, self.pad_down
 
+        self.args = args
+        self.base_size = image_size - pad_size * 2
+        self.pad_up = nn.Parameter(torch.randn([1, 3, pad_size, image_size]))
+        self.pad_down = nn.Parameter(torch.randn([1, 3, pad_size, image_size]))
+        self.pad_left = nn.Parameter(torch.randn([1, 3, self.base_size, pad_size]))
+        self.pad_right = nn.Parameter(torch.randn([1, 3, self.base_size, pad_size]))
+
         # Hints:
         # - Each of these are parameters that we need to learn. So how would you define them in torch?
         # - See Fig 2(c) in the assignment to get a sense of how each of these should look like.
         # - Shape of self.pad_up and self.pad_down should be (1, 3, pad_size, image_size)
         # - See Fig 2.(g)/(h) and think about the shape of self.pad_left and self.pad_right
 
-        raise NotImplementedError
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -52,13 +58,20 @@ class PadPrompter(nn.Module):
         # PUT YOUR CODE HERE  #
         #######################
         # TODO: For a given batch of images, add the prompt as a padding to the image.
+        
+        x = x.to(self.args.device)
+        base = torch.zeros(1, 3, self.base_size, self.base_size).to(self.args.device)
+        prompt = torch.cat([self.pad_left, base, self.pad_right], dim=3)
+        prompt = torch.cat([self.pad_up, prompt, self.pad_down], dim=2)
+        prompt = torch.cat(x.size(0) * [prompt])
+
+        return x + prompt
 
         # Hints:
         # - First define the prompt. Then add it to the batch of images.
         # - It is always advisable to implement and then visualize if
         #   your prompter does what you expect it to do.
 
-        raise NotImplementedError
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -82,6 +95,9 @@ class FixedPatchPrompter(nn.Module):
         # patch (can define as self.patch) of size [prompt_size, prompt_size]
         # that is placed at the top-left corner of the image.
 
+        self.args = args
+        self.patch = nn.Parameter(torch.randn([1, 3, args.prompt_size, args.prompt_size]))
+
         # Hints:
         # - The size of patch needs to be [1, 3, prompt_size, prompt_size]
         #     (1 for the batch dimension)
@@ -89,7 +105,6 @@ class FixedPatchPrompter(nn.Module):
         # - You can define variable parameters using torch.nn.Parameter
         # - You can initialize the patch randomly in N(0, 1) using torch.randn
 
-        raise NotImplementedError
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -100,12 +115,16 @@ class FixedPatchPrompter(nn.Module):
         #######################
         # TODO: For a given batch of images, place the patch at the top-left
 
+        x = x.to(self.args.device)
+        prompt = torch.zeros([1, 3, self.args.image_size, self.args.image_size]).to(self.args.device)
+        prompt[:, :, :self.args.prompt_size, :self.args.prompt_size] = self.patch
+        return x + prompt
+
         # Hints:
         # - First define the prompt. Then add it to the batch of images.
         # - It is always advisable to implement and then visualize if
         #   your prompter does what you expect it to do.
 
-        raise NotImplementedError
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -129,6 +148,9 @@ class RandomPatchPrompter(nn.Module):
         # patch (can be defined as self.patch) of size [prompt_size, prompt_size]
         # that is located at the top-left corner of the image.
 
+        self.args = args
+        self.patch = nn.Parameter(torch.randn([1, 3, args.prompt_size, args.prompt_size]))
+
         # Hints:
         # - The size of patch needs to be [1, 3, prompt_size, prompt_size]
         #     (1 for the batch dimension)
@@ -136,7 +158,6 @@ class RandomPatchPrompter(nn.Module):
         # - You can define variable parameters using torch.nn.Parameter
         # - You can initialize the patch randomly in N(0, 1) using torch.randn
 
-        raise NotImplementedError
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -147,6 +168,15 @@ class RandomPatchPrompter(nn.Module):
         #######################
         # TODO: For a given batch of images, place the patch at the top-left
 
+        x = x.to(self.args.device)
+        prompt = torch.zeros([1, 3, self.args.image_size, self.args.image_size]).to(self.args.device)
+        
+        noiseX = np.random.choice(self.args.image_size - self.args.prompt_size)
+        noiseY = np.random.choice(self.args.image_size - self.args.prompt_size)
+
+        prompt[:, :, noiseX:noiseX + self.args.prompt_size, noiseY:noiseY + self.args.prompt_size] = self.patch
+        return x + prompt
+
         # Hints:
         # - First define the prompt. Then add it to the batch of images.
         # - Note that, here, you need to place the patch at a random location
@@ -154,7 +184,6 @@ class RandomPatchPrompter(nn.Module):
         # - It is always advisable to implement and then visualize if
         #   your prompter does what you expect it to do.
 
-        raise NotImplementedError
         #######################
         # END OF YOUR CODE    #
         #######################
