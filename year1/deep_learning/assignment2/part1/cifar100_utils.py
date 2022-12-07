@@ -35,17 +35,13 @@ def add_augmentation(augmentation_name, transform_list):
 
     # Create a new transformation based on the augmentation_name.
     if augmentation_name == "RandomHorizontalFlip":
-        transform = transforms.RandomHorizontalFlip(0.3)
-    elif augmentation_name == "RandomRotation":
-        transform = transforms.RandomRotation(45)
-    elif augmentation_name == "RandomCrop":
-        transform = transforms.RandomCrop(50)
+        transform = transforms.RandomHorizontalFlip()
     else:
         transform = None
 
     # Add the new transformation to the list.
     if transform != None:
-        transform_list.insert(0, transform)
+        transform_list = [transform] + transform_list
 
     #######################
     # END OF YOUR CODE    #
