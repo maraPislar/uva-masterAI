@@ -70,10 +70,25 @@ class VAE(pl.LightningModule):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        L_rec = None
-        L_reg = None
-        bpd = None
-        raise NotImplementedError
+
+        # Encode the images into the latent space
+        mean, log_std = self.encoder(imgs)
+        
+        # Sample from the latent space
+        z = sample_reparameterize(mean, log_std)
+        
+        # Decode the samples from the latent space
+        img_means = self.decoder(z)
+        img_means = torch.moveaxis(img_means, 1, 0).reshape([16, -1]).T
+        img_means = torch.multinomial(img_means, num_samples=np.prod(imgs.shape), replacement=True)
+
+        # Calculate the samples from the latent space
+        L_rec = torch.nn.functional.cross_entropy(img_means, imgs.flatten(), reduction='none')
+        L_reg = KLD(mean, log_std)
+
+        # Calculate the bits per dimension metric
+        bpd = elbo_to_bpd(L_rec + L_reg, imgs.shape)
+
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -91,8 +106,13 @@ class VAE(pl.LightningModule):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        x_samples = None
-        raise NotImplementedError
+
+        # Generate random samples from the latent space
+        z = torch.randn(batch_size, self.z_dim)
+
+        # Decode the samples from the latent space
+        x_samples = self.decoder(z)
+        
         #######################
         # END OF YOUR CODE    #
         #######################

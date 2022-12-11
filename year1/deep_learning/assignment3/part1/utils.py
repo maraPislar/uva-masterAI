@@ -35,8 +35,10 @@ def sample_reparameterize(mean, std):
     #######################
     # PUT YOUR CODE HERE  #
     #######################
-    z = None
-    raise NotImplementedError
+
+    epsilon = torch.randn_like(std)
+    z = epsilon * std + mean
+
     #######################
     # END OF YOUR CODE    #
     #######################
@@ -58,8 +60,9 @@ def KLD(mean, log_std):
     #######################
     # PUT YOUR CODE HERE  #
     #######################
-    KLD = None
-    raise NotImplementedError
+
+    KLD = -0.5 * torch.sum(1 + 2*log_std - mean ** 2 - np.exp(2*log_std), dim = 1)
+
     #######################
     # END OF YOUR CODE    #
     #######################
@@ -78,8 +81,10 @@ def elbo_to_bpd(elbo, img_shape):
     #######################
     # PUT YOUR CODE HERE  #
     #######################
-    bpd = None
-    raise NotImplementedError
+
+    num_pixels = np.prod(img_shape[1:])
+    bpd = elbo / (num_pixels*np.log(2))
+    
     #######################
     # END OF YOUR CODE    #
     #######################
@@ -110,8 +115,23 @@ def visualize_manifold(decoder, grid_size=20):
     #######################
     # PUT YOUR CODE HERE  #
     #######################
-    img_grid = None
-    raise NotImplementedError
+
+    # Create a grid of latent values
+    z1 = torch.arange(0.5/grid_size, 1.0, 1.0/grid_size)
+    z2 = torch.arange(0.5/grid_size, 1.0, 1.0/grid_size)
+    z1, z2 = torch.meshgrid(z1, z2)
+    z = torch.stack([z1, z2], dim=-1)
+
+    # Transform the latent values using the inverse CDF of the normal distribution
+    z = torch.normal.icdf(z)
+
+    # Pass the latent values through the decoder
+    img_means = decoder(z)
+    img_means = torch.nn.functional.softmax(img_means, dim=-1)
+
+    # Create a grid of images
+    img_grid = make_grid(img_means, nrow=grid_size)
+
     #######################
     # END OF YOUR CODE    #
     #######################
